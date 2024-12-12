@@ -3,6 +3,7 @@ package com.example.demo.rest;
 import com.example.demo.client.EmailServiceClient;
 import com.example.demo.dto.EmailResponseDTO;
 import com.example.demo.service.FeignService;
+import com.example.demo.service.MessageStorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,9 @@ public class FeignController {
      */
     @Autowired
     private EmailServiceClient emailServiceClient;
+
+    @Autowired
+    private MessageStorageService messageStorageService;
 
     /**
      * <p>Service that contains the logic to fetch and save sender information.</p>
@@ -64,6 +68,29 @@ public class FeignController {
         } catch (Exception e) {
             System.err.println("Error while fetching senders: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * <p>Endpoint to fetch email details based on the last message received from RabbitMQ.</p>
+     * <p>This method retrieves the last message stored from RabbitMQ, interprets it as an email ID,
+     * and then uses the Feign client to fetch the corresponding email details.</p>
+     * <p>If the message is not yet received or is in an invalid format, appropriate error messages are returned.</p>
+     *
+     * @return a formatted string containing the email sender and its ID, or an error message if the operation fails.
+     */
+    @GetMapping("/rabbitMQ")
+    public String getLastEmail() {
+        String message = messageStorageService.getLastMessage();
+        if (message == null) {
+            return "No message received yet!";
+        }
+        try {
+            Long emailId = Long.parseLong(message);
+            EmailResponseDTO email = emailServiceClient.getEmailById(emailId).getBody();
+            return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " working on feign";
+        } catch (NumberFormatException e) {
+            return "Invalid message format: " + message;
         }
     }
 }
