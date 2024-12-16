@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  * <p>This class retrieves email data via a Feign client, processes the senders, and stores them in a database.</p>
  */
 @Service
+@Transactional
 public class FeignService {
 
     /**

@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class FeignServiceTest {
 
-    /*@InjectMocks
+    @InjectMocks
     private FeignService feignService;
 
     @Mock
@@ -62,6 +62,19 @@ class FeignServiceTest {
         assertEquals("test2@example.com", savedSenders.get(1).getEmailFrom());
     }
 
+    @Test
+    void saveSender_Failure_ResponseNotSuccessful() {
+
+        ResponseEntity<List<EmailResponseDTO>> mockResponse = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        when(emailServiceClient.getAllEmails()).thenReturn(mockResponse);
+
+        List<String> result = feignService.saveSender();
+
+        assertEquals(null, result);
+
+        verify(sendersRepository, never()).saveAll(any());
+    }
+
 
     @Test
     void testGetAndSaveLastEmail_Success() {
@@ -78,6 +91,31 @@ class FeignServiceTest {
 
         Senders savedSender = captor.getValue();
         assertEquals("test@example.com", savedSender.getEmailFrom());
-    }*/
+    }
+
+    @Test
+    void getAndSaveLastEmail_NoMessageReceived() {
+
+        when(messageStorageService.getLastMessage()).thenReturn(null);
+
+        String result = feignService.getAndSaveLastEmail();
+
+        assertEquals("No message received yet!", result);
+
+        verify(sendersRepository, never()).save(any());
+    }
+
+    @Test
+    void getAndSaveLastEmail_InvalidMessageFormat() {
+        when(messageStorageService.getLastMessage()).thenReturn("invalid_id");
+
+        try {
+            feignService.getAndSaveLastEmail();
+        } catch (NumberFormatException ex) {
+            assertEquals("For input string: \"invalid_id\"", ex.getMessage());
+        }
+
+        verify(sendersRepository, never()).save(any());
+    }
 
 }

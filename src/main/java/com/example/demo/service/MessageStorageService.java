@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 /**
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
  * providing methods to set and get the stored message.</p>
  */
 @Service
+@Transactional
 public class MessageStorageService {
 
     /**
