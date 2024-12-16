@@ -73,24 +73,13 @@ public class FeignController {
 
     /**
      * <p>Endpoint to fetch email details based on the last message received from RabbitMQ.</p>
-     * <p>This method retrieves the last message stored from RabbitMQ, interprets it as an email ID,
-     * and then uses the Feign client to fetch the corresponding email details.</p>
-     * <p>If the message is not yet received or is in an invalid format, appropriate error messages are returned.</p>
-     *
+     * <p>It calls the Feign service to retrieve last sender, and return a message with the senderId and sender.</p>
      * @return a formatted string containing the email sender and its ID, or an error message if the operation fails.
      */
     @GetMapping("/rabbitMQ")
     public String getLastEmail() {
-        String message = messageStorageService.getLastMessage();
-        if (message == null) {
-            return "No message received yet!";
-        }
-        try {
-            Long emailId = Long.parseLong(message);
-            EmailResponseDTO email = emailServiceClient.getEmailById(emailId).getBody();
-            return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " working on feign";
-        } catch (NumberFormatException e) {
-            return "Invalid message format: " + message;
-        }
+
+        return feignService.getAndSaveLastEmail();
+
     }
 }

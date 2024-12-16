@@ -32,6 +32,9 @@ public class FeignService {
     @Autowired
     private SendersRepository sendersRepository;
 
+    @Autowired
+    private MessageStorageService messageStorageService;
+
     /**
      * <p>Fetches all emails from the external email service and extracts unique senders.</p>
      * <p>The senders' email addresses are stored in the {@link Senders} table in the database.</p>
@@ -68,5 +71,32 @@ public class FeignService {
             System.err.println("Error retrieving emails from the service.");
         }
         return null;
+    }
+
+    /**
+     * <p>This method retrieves the last message stored from RabbitMQ, interprets it as an email ID,
+     * and then uses the Feign client to fetch the corresponding email details.</p>
+     * <p>If the message is not yet received or is in an invalid format, appropriate error messages are returned.</p>
+     * <p>This method also saved the sender on the database.</p>
+     * @return a formatted string containing the email sender and its ID, or an error message if the operation fails.
+     */
+    @Transactional
+    public String getAndSaveLastEmail(){
+
+        String message = messageStorageService.getLastMessage();
+
+        if (message == null) {
+            return "No message received yet!";
+        }
+
+        Long emailId = Long.parseLong(message);
+        EmailResponseDTO email = emailServiceClient.getEmailById(emailId).getBody();
+
+        Senders sender = new Senders();
+        sender.setEmailFrom(email.getEmailFrom());
+        sendersRepository.save(sender);
+
+        return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " working on feign";
+
     }
 }
