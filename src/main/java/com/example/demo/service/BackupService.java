@@ -5,6 +5,7 @@ import com.example.demo.dto.EmailResponseDTO;
 import com.example.demo.entity.Senders;
 import com.example.demo.repository.SendersRepository;
 import jakarta.transaction.Transactional;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
-public class FeignService {
+public class BackupService {
 
     /**
      * <p>Feign client for accessing external email service.</p>
@@ -33,8 +34,8 @@ public class FeignService {
     @Autowired
     private SendersRepository sendersRepository;
 
-    @Autowired
-    private MessageStorageService messageStorageService;
+    @Setter
+    private Long lastEmailId;
 
     /**
      * <p>Fetches all emails from the external email service and extracts unique senders.</p>
@@ -82,22 +83,24 @@ public class FeignService {
      * @return a formatted string containing the email sender and its ID, or an error message if the operation fails.
      */
     @Transactional
-    public String getAndSaveLastEmail(){
+    public String saveLastEmail(Long emailId) {
 
-        String message = messageStorageService.getLastMessage();
-
-        if (message == null) {
+        if (emailId == null) {
             return "No message received yet!";
         }
 
-        Long emailId = Long.parseLong(message);
-        EmailResponseDTO email = emailServiceClient.getEmailById(emailId).getBody();
+        ResponseEntity<EmailResponseDTO> response = emailServiceClient.getEmailById(emailId);
+        if (response == null || response.getBody() == null) {
+            return "Failed to retrieve email details!";
+        }
+
+        EmailResponseDTO email = response.getBody();
 
         Senders sender = new Senders();
         sender.setEmailFrom(email.getEmailFrom());
         sendersRepository.save(sender);
 
-        return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " working on feign";
-
+        return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " saved successfully.";
     }
+
 }

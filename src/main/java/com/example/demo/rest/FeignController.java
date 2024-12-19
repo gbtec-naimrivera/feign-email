@@ -2,8 +2,7 @@ package com.example.demo.rest;
 
 import com.example.demo.client.EmailServiceClient;
 import com.example.demo.dto.EmailResponseDTO;
-import com.example.demo.service.FeignService;
-import com.example.demo.service.MessageStorageService;
+import com.example.demo.service.BackupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,14 +24,11 @@ public class FeignController {
     @Autowired
     private EmailServiceClient emailServiceClient;
 
-    @Autowired
-    private MessageStorageService messageStorageService;
-
     /**
      * <p>Service that contains the logic to fetch and save sender information.</p>
      */
     @Autowired
-    private FeignService feignService;
+    private BackupService backupService;
 
     /**
      * <p>Endpoint to fetch the details of a specific email by its ID.</p>
@@ -58,7 +54,7 @@ public class FeignController {
     @GetMapping("/senders")
     public ResponseEntity<List<String>> getAndPrintSenders() {
         try {
-            List<String> senders = feignService.saveSender();
+            List<String> senders = backupService.saveSender();
 
             if (senders.isEmpty()) {
                 return ResponseEntity.noContent().build();
@@ -76,10 +72,8 @@ public class FeignController {
      * <p>It calls the Feign service to retrieve last sender, and return a message with the senderId and sender.</p>
      * @return a formatted string containing the email sender and its ID, or an error message if the operation fails.
      */
-    @GetMapping("/rabbitMQ")
-    public String getLastEmail() {
-
-        return feignService.getAndSaveLastEmail();
-
+    @GetMapping("/rabbitMQ/{emailId}")
+    public String processEmail(@PathVariable Long emailId) {
+        return backupService.saveLastEmail(emailId);
     }
 }

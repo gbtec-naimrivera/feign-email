@@ -1,6 +1,6 @@
 package com.example.demo.rabbitmq;
 
-import com.example.demo.service.MessageStorageService;
+import com.example.demo.service.BackupService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -18,7 +18,7 @@ public class RabbitMQConsumer {
      * Service for storing and retrieving the last received message.
      */
     @Autowired
-    private MessageStorageService messageStorageService;
+    private BackupService backupService;
 
     /**
      * Logger instance for logging information about consumed messages.
@@ -27,13 +27,25 @@ public class RabbitMQConsumer {
 
     /**
      * Listens to messages from the configured RabbitMQ queue.
-     * <p>The received message is logged and stored using {@link MessageStorageService}.</p>
+     * <p>The received message is logged and stored using {@link BackupService}.</p>
      *
      * @param message the message received from the RabbitMQ queue.
      */
     @RabbitListener(queues = "${rabbitmq.queue.name}")
     public void consume(String message) {
+
         LOGGER.info(String.format("Received message -> %s", message));
-        messageStorageService.setLastMessage(message);
+
+        try {
+
+            Long emailId = Long.parseLong(message);
+            String result = backupService.saveLastEmail(emailId);
+
+            LOGGER.info(result);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Invalid message format: " + message, e);
+        } catch (Exception e) {
+            LOGGER.error("Error processing email: " + message, e);
+        }
     }
 }
