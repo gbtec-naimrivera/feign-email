@@ -4,6 +4,7 @@ import com.example.demo.client.EmailServiceClient;
 import com.example.demo.dto.EmailResponseDTO;
 import com.example.demo.entity.Senders;
 import com.example.demo.repository.SendersRepository;
+import com.example.demo.repositoryElastic.SendersRepositoryElastic;
 import jakarta.transaction.Transactional;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ public class BackupService {
      */
     @Autowired
     private SendersRepository sendersRepository;
+
+    @Autowired
+    private SendersRepositoryElastic sendersRepositoryElastic;
 
     @Setter
     private Long lastEmailId;
@@ -66,6 +70,7 @@ public class BackupService {
             }
 
             sendersRepository.saveAll(sendersToSave);
+            sendersRepositoryElastic.saveAll(sendersToSave);
 
             return senders;
 
@@ -99,6 +104,7 @@ public class BackupService {
         Senders sender = new Senders();
         sender.setEmailFrom(email.getEmailFrom());
         sendersRepository.save(sender);
+        sendersRepositoryElastic.save(sender);
 
         return "Email from " + email.getEmailFrom() + " with id " + email.getEmailId() + " saved successfully.";
     }

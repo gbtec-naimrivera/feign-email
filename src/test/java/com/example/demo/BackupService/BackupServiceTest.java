@@ -4,6 +4,7 @@ import com.example.demo.client.EmailServiceClient;
 import com.example.demo.dto.EmailResponseDTO;
 import com.example.demo.entity.Senders;
 import com.example.demo.repository.SendersRepository;
+import com.example.demo.repositoryElastic.SendersRepositoryElastic;
 import com.example.demo.service.BackupService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,9 @@ class BackupServiceTest {
     @Mock
     private SendersRepository sendersRepository;
 
+    @Mock
+    private SendersRepositoryElastic sendersRepositoryElastic;
+
     @Test
     void testSaveSender_Success() {
         EmailResponseDTO email1 = new EmailResponseDTO(1L, "test1@example.com", "Body1", 1, null, null);
@@ -49,6 +53,7 @@ class BackupServiceTest {
 
         ArgumentCaptor<List<Senders>> captor = ArgumentCaptor.forClass(List.class);
         verify(sendersRepository).saveAll(captor.capture());
+        verify(sendersRepositoryElastic).saveAll(captor.capture());
 
         List<Senders> savedSenders = captor.getValue();
         assertEquals(2, savedSenders.size());
@@ -65,6 +70,7 @@ class BackupServiceTest {
         assertNull(result);
 
         verify(sendersRepository, never()).saveAll(any());
+        verify(sendersRepositoryElastic, never()).saveAll(any());
     }
 
     @Test
@@ -79,6 +85,7 @@ class BackupServiceTest {
 
         ArgumentCaptor<Senders> captor = ArgumentCaptor.forClass(Senders.class);
         verify(sendersRepository).save(captor.capture());
+        verify(sendersRepositoryElastic).save(captor.capture());
 
         Senders savedSender = captor.getValue();
         assertEquals("test@example.com", savedSender.getEmailFrom());
@@ -91,6 +98,7 @@ class BackupServiceTest {
         assertEquals("No message received yet!", result);
 
         verify(sendersRepository, never()).save(any());
+        verify(sendersRepositoryElastic, never()).save(any());
     }
 
     @Test
@@ -102,5 +110,6 @@ class BackupServiceTest {
         }
 
         verify(sendersRepository, never()).save(any());
+        verify(sendersRepositoryElastic, never()).save(any());
     }
 }

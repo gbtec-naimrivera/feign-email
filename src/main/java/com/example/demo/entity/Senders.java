@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.springframework.data.elasticsearch.annotations.*;
+
 /**
  * <p>Entity class representing a sender in the "senders" table in the database.</p>
  * <p>This entity stores information about the sender's email address and a unique identifier for each sender.</p>
@@ -16,6 +18,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Entity
 @Table(name = "senders")
+@Document(indexName = "senders_index")
 public class Senders {
 
     /**
